@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세계사 인터랙티브 타임라인</title>
+<style>
+:root{--bg:#07090d;--card:#131820;--card2:#1b222d;--tx:#eef0f3;--mu:#8f98a6;--gold:#d8b45a;--blue:#5fa8ff;--ok:#4fd18b;--no:#ff6b6b;--ln:#2a3340;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;line-height:1.6}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+.sans,nav,button,.chip,.tag{font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif}
+nav{display:flex;gap:4px;overflow-x:auto;padding:8px 12px;border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);background:#07090dee;z-index:5}
+nav button{padding:10px 14px;border-radius:8px;white-space:nowrap;color:var(--mu);min-height:44px}
+nav button.on{color:var(--gold);background:var(--card)}
+.view{display:none;padding:20px 16px 60px;max-width:1200px;margin:auto}.view.on{display:block}
+h1{font-size:clamp(30px,6vw,60px);line-height:1.1;margin:.3em 0 .2em;letter-spacing:-.02em}
+.sub{color:var(--mu);font-size:18px}
+.cta{background:var(--gold);color:#111;padding:12px 22px;border-radius:8px;font-weight:700;min-height:44px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}
+.chip{padding:8px 14px;border:1px solid var(--ln);border-radius:20px;color:var(--mu);min-height:40px}
+.chip.on{border-color:var(--gold);color:var(--gold)}
+.hero{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.info{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:18px;position:sticky;top:70px}
+.info .y{font-size:40px;color:var(--gold)}
+.tl{display:flex;overflow-x:auto;padding:30px 10px 20px;position:relative;scroll-behavior:smooth}
+.tl::before{content:"";position:absolute;left:0;right:0;top:56px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.n{flex:0 0 130px;text-align:center;position:relative;padding:0 4px}
+.n i{display:block;width:12px;height:12px;border-radius:50%;background:var(--card2);border:2px solid var(--gold);margin:0 auto 10px;position:relative;transition:.3s}
+.n.big i{width:20px;height:20px;margin-top:-4px;box-shadow:0 0 14px var(--gold)}
+.n.sel i{background:var(--gold);box-shadow:0 0 22px var(--blue);transform:scale(1.3)}
+.n.seen i{border-color:var(--blue)}
+.n b{display:block;font-size:12px;color:var(--gold);font-weight:400}
+.n span{font-size:14px}
+.n:after{content:"›";position:absolute;right:-6px;top:44px;color:var(--mu)}
+.n:last-child:after{content:""}
+.drawer{position:fixed;inset:0;background:#000b;display:none;z-index:20;justify-content:flex-end}
+.drawer.on{display:flex}
+.panel{width:min(620px,100%);background:var(--card);height:100%;overflow:auto;padding:24px 20px calc(40px + env(safe-area-inset-bottom,0px));animation:sl .3s}
+@keyframes sl{from{transform:translateX(40px);opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.panel h2{font-size:30px;margin:.2em 0}
+.sec{border-left:2px solid var(--gold);padding-left:14px;margin:18px 0}
+.sec h3{margin:0 0 6px;font-size:16px;color:var(--gold)}
+.sec li{margin:3px 0}
+.tag{display:inline-block;color:var(--blue);margin-right:8px;font-size:14px}
+.rel{display:flex;flex-wrap:wrap;gap:8px}
+.rel button,.pbtn{border:1px solid var(--ln);border-radius:8px;padding:8px 12px;background:var(--card2);min-height:44px;text-align:left}
+.rel small{color:var(--gold);display:block;font-size:11px}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0}
+.flow span.cur{background:var(--gold);color:#111;padding:6px 10px;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.box{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:16px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp .box:first-child{border-top:3px solid var(--no)}.cmp .box:last-child{border-top:3px solid var(--blue)}
+.cmp dt{color:var(--gold);font-size:13px;margin-top:10px}.cmp dd{margin:0}
+.opt{display:block;width:100%;text-align:left;padding:14px;margin:8px 0;border:1px solid var(--ln);border-radius:10px;background:var(--card2);min-height:48px}
+.opt.ok{border-color:var(--ok);background:#12301f}.opt.no{border-color:var(--no);background:#3a1717}
+.bar{height:10px;background:var(--card2);border-radius:5px;overflow:hidden}.bar div{height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));transition:.5s}
+svg text{fill:var(--tx);font-size:12px;font-family:sans-serif}
+.rt{cursor:pointer;fill:none;stroke-width:3;stroke-dasharray:7 5}.rt:hover,.rt.on{stroke-width:5}
+@media(max-width:760px){
+.hero,.cmp{grid-template-columns:1fr}.info{position:static;order:-1}
+.tl{flex-direction:column;overflow:visible;padding:10px 0 10px 24px}
+.tl::before{left:11px;right:auto;top:0;bottom:0;width:1px;height:auto;background:var(--gold)}
+.n{flex:none;text-align:left;padding:10px 0 10px 20px;min-height:56px;width:100%}
+.n i{position:absolute;left:-19px;top:20px;margin:0}.n.big i{margin:0;left:-23px;top:16px}
+.n:after{content:""}}
+.tl{flex-direction:column;overflow:visible;padding:10px 0 10px 24px}
+.tl::before{left:11px;right:auto;top:0;bottom:0;width:1px;height:auto;background:linear-gradient(var(--gold),var(--blue))}
+.n{flex:none;text-align:left;padding:12px 0 12px 22px;width:100%;min-height:56px;display:block}
+.n i{position:absolute;left:-19px;top:22px;margin:0}.n.big i{margin:0;left:-23px;top:18px}
+.n:after{content:""}.n span{font-size:17px}.n small{display:block;color:var(--mu);font-size:13px}
+.di{padding:12px;margin:6px 0;border:1px solid var(--ln);border-radius:10px;background:var(--card2);touch-action:none;cursor:grab;user-select:none;min-height:48px}
+.di.drg{border-color:var(--gold);opacity:.8}.di.ok{border-color:var(--ok)}.di.no{border-color:var(--no)}
+:root{--bg:#f4f7ff;--card:#fff;--card2:#eaf0ff;--tx:#26304a;--mu:#66728f;--gold:#f97316;--blue:#3b82f6;--ok:#16a34a;--no:#ef4444;--ln:#d6e0f7}
+body,.n span,.panel{font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif}
+nav{background:#f4f7ffee}
+.drawer{background:#1e2a4a88}
+.cta{color:#fff;border-radius:999px;box-shadow:0 3px 0 #c2570d}
+.cta:active{transform:translateY(2px);box-shadow:none}
+.box,.info,.panel .rel button,.pbtn,.opt,.di{border-radius:16px}
+.box,.info{box-shadow:0 2px 8px #3b82f622}
+.chip,nav button{border-radius:999px}
+.chip.on,nav button.on{background:#fff2e6}
+.flow span.cur{color:#fff;border-radius:999px}
+.opt.ok{background:#dcfce7}.opt.no{background:#fee2e2}
+.n.big i{box-shadow:0 0 0 5px #f9731633}.n.sel i{box-shadow:0 0 0 6px #3b82f644}
+svg polygon{fill:#bcd3f7}svg g circle{stroke:#26304a;stroke-width:1.5}
+h1{letter-spacing:0}
+.cd{text-align:left}.cd p{display:none;margin:6px 0 0;font-size:14px}.cd.open p{display:block}.cd.open{border-color:var(--gold)}
+</style></head><body>
+<nav id="nav"></nav>
+
+<section class="view on" id="v-tl">
+ <h1>세계사 타임라인</h1>
+ <p class="sub">사건을 눌러서 왜 일어났는지, 다음엔 어떻게 이어졌는지 알아봐요!</p>
+ <button class="cta" onclick="go('newroute')">탐험 시작하기 🚀</button>
+ <div class="filters" id="filters"></div>
+ <div class="hero"><div class="tl" id="tl"></div>
+  <div class="info" id="info"></div></div>
+</section>
+
+<section class="view" id="v-ppl"><h1 style="font-size:36px">인물</h1><div class="grid" id="ppl"></div><div class="box" id="pcard" style="margin-top:16px;display:none"></div></section>
+
+<section class="view" id="v-map"><h1 style="font-size:36px">신항로 개척 지도</h1><p class="sub">항로를 눌러 보세요. (개념도)</p>
+<svg viewBox="0 0 800 400" style="width:100%;background:#e3efff;border-radius:16px">
+<g fill="#26303f"><polygon points="150,60 230,70 260,140 240,190 290,240 290,300 260,370 235,330 225,250 190,200 150,140"/><polygon points="380,90 470,60 700,70 740,130 700,200 620,250 570,240 540,200 470,170 420,150 390,140"/><polygon points="395,165 470,165 500,230 470,320 430,340 405,270 385,200"/></g>
+<text x="170" y="120">아메리카</text><text x="520" y="120">아시아</text><text x="410" y="240">아프리카</text><text x="360" y="120">유럽</text>
+<path id="r0" class="rt" stroke="#5fa8ff" d="M395 140 Q380 260 440 335"/>
+<path id="r1" class="rt" stroke="#d8b45a" d="M395 140 Q400 300 440 338 Q520 300 560 215"/>
+<path id="r2" class="rt" stroke="#ff6b6b" d="M395 140 Q300 120 230 205"/>
+<path id="r3" class="rt" stroke="#4fd18b" d="M395 140 Q300 300 255 345 Q450 400 660 225"/>
+<g fill="#fff"><circle cx="395" cy="140" r="4"/><circle cx="560" cy="215" r="4"/><circle cx="230" cy="205" r="4"/><circle cx="660" cy="225" r="4"/></g>
+<text x="380" y="130">리스본</text><text x="565" y="212">캘리컷</text><text x="200" y="222">서인도 제도</text><text x="640" y="245">필리핀</text></svg>
+<div class="box" id="mapinfo" style="margin-top:12px">항로를 선택하세요.</div></section>
+
+<section class="view" id="v-quiz"></section>
+<section class="view" id="v-cards"></section>
+<section class="view" id="v-all"><h1 style="font-size:36px">전체 사건</h1><div class="grid" id="all"></div></section>
+<section class="view" id="v-prog"></section>
+
+<div class="drawer" id="dr" onclick="if(event.target==this)closeD()"><div class="panel" id="panel"></div></div>
+
+<script>
+// ===== DATA =====
+// rel 유형: 배경/영향/관련/비교/동시대/결과
+const events=[
+{id:"newroute",y:1488,yr:"1488~1522",t:"신항로 개척",cat:["탐험","경제"],big:1,sum:"동방 무역의 열망이 대서양 너머로 배를 보내다.",
+ c:["마르코 폴로『동방견문록』으로 동방 호기심 증가","십자군 전쟁 이후 향신료·비단·도자기 수요 증가","이슬람·이탈리아 상인의 독점 → 직접 교역로 필요","조선술(캐러벨선)·나침반·해도 등 항해술 발달"],
+ d:["포르투갈·에스파냐 주도 (대서양 연안, 지중해 무역에서 소외)","디아스: 희망봉 도착","바스쿠 다가마: 인도 항로 개척","콜럼버스: 서인도 제도 도착","마젤란 함대: 최초의 세계 일주"],
+ r:["무역 중심지가 지중해 → 대서양으로 이동","삼각 무역, 세계적 교역망 형성","아스테카·잉카 정복, 노예 무역"],
+ p:["디아스","바스쿠 다가마","콜럼버스","마젤란"],k:["마르코 폴로","캐러벨선","희망봉","서인도 제도"],rel:[["trade","영향"]]},
+{id:"trade",y:1500,yr:"16세기",t:"세계적 교역망과 상업 혁명",cat:["경제"],sum:"대서양을 둘러싼 삼각 무역과 은의 흐름이 유럽 경제를 바꾸다.",
+ c:["신항로 개척으로 넓은 해외 시장 확보"],
+ d:["삼각 무역: 유럽·아프리카·아메리카 연결","아메리카의 금·은 유입 → 가격 혁명","동인도 회사로 아시아 진출","아메리카: 플랜테이션·광산 노동, 전염병(천연두·홍역)","아프리카: 노예 무역"],
+ r:["상업 혁명: 상공업·금융업 발달, 자본주의 바탕","원주민 인구 급감·노동력 부족","아프리카 인구 감소, 부족 간 갈등"],
+ p:[],k:["삼각 무역","가격 혁명","동인도 회사","플랜테이션"],rel:[["newroute","배경"],["fiscal","영향"],["reform","동시대"]]},
+{id:"reform",y:1517,yr:"1517",t:"종교 개혁",cat:["종교","정치"],big:1,sum:"면벌부 판매에 대한 비판이 유럽의 종교 질서를 흔들다.",
+ c:["교황 레오 10세, 성 베드로 성당 증축비 마련 위해 면벌부 판매"],
+ d:["루터 '95개조 반박문': 구원은 신앙으로, 신앙의 근거는 성서","인쇄술 덕에 확산, 제후·농민 지지","칼뱅: 예정설, 이윤 추구 정당화 → 상공업자 지지","영국: 헨리 8세 수장령 → 영국 국교회"],
+ r:["아우크스부르크 화의(1555): 루터파 공식 인정","신교와 구교의 대립 → 종교 전쟁"],
+ p:["루터","칼뱅","헨리 8세"],k:["면벌부","95개조 반박문","예정설","영국 국교회"],rel:[["war","결과"],["trade","동시대"]]},
+{id:"fiscal",y:1600,yr:"16~17세기",t:"재정·군사 국가의 등장",cat:["정치","경제","국가 형성"],sum:"끝없는 전쟁이 강한 군대와 세금 제도를 갖춘 국가를 낳다.",
+ c:["16~17세기 잦은 전쟁","군사력·징세 제도·중앙 집권 행정 필요"],
+ d:["상비군·관료제·중상주의","에스파냐 펠리페 2세: 최초의 재정·군사 국가, 무적함대 → 영국에 패해 쇠퇴","네덜란드: 독립 후 동인도 회사로 부 축적","루이 14세: 절대주의, 베르사유 궁전","프리드리히 2세: 계몽주의 개혁, 상수시 궁전"],
+ r:["왕권 강화 → 영국에서 의회와 충돌","영국은 왕과 의회 협력으로 강력한 국가로 발전"],
+ p:["엘리자베스 1세"],k:["상비군","관료제","중상주의","절대주의"],rel:[["trade","배경"],["puritan","영향"],["war","관련"]]},
+{id:"war",y:1618,yr:"1618~1648",t:"종교 전쟁과 30년 전쟁",cat:["종교","정치"],sum:"신교와 구교의 대립이 국제 전쟁으로 번지다.",
+ c:["신교(루터파·칼뱅파)와 구교(로마 가톨릭)의 대립"],
+ d:["독일의 30년 전쟁, 유럽 여러 국가 참전"],
+ r:["베스트팔렌 조약: 제후가 종파 선택, 칼뱅파 인정, 스위스·네덜란드 독립 (PDF엔 1684로 표기되어 있으나 실제 체결은 1648년)"],
+ p:[],k:["30년 전쟁","베스트팔렌 조약"],rel:[["reform","배경"],["fiscal","관련"]]},
+{id:"puritan",y:1642,yr:"1642~1649",t:"청교도 혁명",cat:["혁명","정치"],big:1,sum:"왕과 의회의 충돌이 영국 정치의 방향을 바꾸다.",
+ c:["찰스 1세의 절대주의 추구","의회 동의 없는 과세","의회의 권리 청원 → 승인 후 의회 해산"],
+ d:["의회파와 왕당파의 내전 (1642)","크롬웰이 이끄는 의회파 승리","찰스 1세 처형 (1649)"],
+ r:["공화정 수립, 왕정 일시 폐지","크롬웰: 의회 해산, 호국경으로 독재","크롬웰 사후 왕정복고(1660)"],
+ p:["찰스 1세","크롬웰"],k:["권리 청원","의회파","왕당파","공화정"],rel:[["fiscal","배경"],["restor","결과"],["glorious","비교"]]},
+{id:"restor",y:1660,yr:"1660",t:"왕정복고",cat:["정치"],sum:"공화정이 끝나고 왕이 돌아오다.",
+ c:["크롬웰 사후 혼란"],d:["찰스 2세 즉위"],r:["뒤를 이은 제임스 2세의 전제 정치 → 명예혁명의 배경"],
+ p:["찰스 2세","제임스 2세"],k:["왕정복고","찰스 2세"],rel:[["puritan","결과"],["glorious","배경"]]},
+{id:"glorious",y:1688,yr:"1688",t:"명예혁명",cat:["혁명","정치"],big:1,sum:"피 흘리지 않고 왕을 바꾼 의회의 혁명.",
+ c:["제임스 2세의 전제 정치","의회와의 갈등"],
+ d:["의회가 제임스 2세 폐위","딸 메리와 남편 윌리엄을 공동 왕으로 추대","권리 장전 승인"],
+ r:["왕권 제한, 의회 권한 강화","입헌 군주제의 토대","왕과 의회 협력으로 강력한 재정·군사 국가로 발전"],
+ p:["제임스 2세","메리","윌리엄"],k:["피 흘리지 않음","메리와 윌리엄","입헌 군주제"],rel:[["restor","배경"],["bill","결과"],["puritan","비교"]]},
+{id:"bill",y:1689,yr:"1689",t:"권리 장전",cat:["정치"],sum:"국왕의 권력을 의회가 만든 법으로 제한하다.",
+ c:["명예혁명 이후 왕권 제한 필요"],
+ d:["법 효력 정지 금지(1조)","의회 승인 없는 과세 금지(5조)","평상시 의회 동의 없는 상비군 금지(6조)"],
+ r:["입헌 군주제의 토대, 입헌주의 전통"],p:[],k:["입헌 군주제","입헌주의"],rel:[["glorious","배경"],["enlight","영향"]]},
+{id:"enlight",y:1750,yr:"17~18세기",t:"과학 혁명과 계몽사상",cat:["정치","인물"],sum:"이성으로 낡은 제도를 고치자는 생각이 퍼지다.",
+ c:["과학 혁명(뉴턴 만유인력)","데카르트의 이성 강조","로크의 사회 계약설·저항권"],
+ d:["볼테르: 신앙·언론·출판의 자유","몽테스키외: 입법·사법·행정 분리","루소: 정부는 모두가 원하는 것을 실천"],
+ r:["몽테스키외·루소는 미국·프랑스 혁명의 사상적 기반"],
+ p:[],k:["사회 계약설","삼권 분립","저항권"],rel:[["bill","배경"],["american","영향"],["french","영향"]]},
+{id:"american",y:1776,yr:"1773~1789",t:"미국 혁명",cat:["혁명","국가 형성"],big:1,sum:"'대표 없는 곳에 과세할 수 없다' — 식민지가 나라를 세우다.",
+ c:["영국인들의 13개 식민지 건설·자치","영국·프랑스 7년 전쟁 → 영국 재정 부족","인지세법 → '대표 없는 곳에 과세할 수 없다'","보스턴 차 사건(1773), 영국의 강경 대응"],
+ d:["대륙 회의 개최","민병대와 영국군 충돌 → 독립 전쟁","워싱턴 총사령관, 독립 선언문(1776)","프랑스·에스파냐 지원, 요크타운 전투 승리","파리 조약(1783) 독립 승인"],
+ r:["헌법 제정: 국민 주권·삼권 분립·연방제","아메리카 합중국 수립(1789), 초대 대통령 워싱턴","프랑스 혁명·라틴 아메리카 독립에 영향"],
+ p:["워싱턴"],k:["인지세","보스턴 차 사건","독립 선언문","연방제"],rel:[["enlight","배경"],["french","영향"]]},
+{id:"french",y:1789,yr:"1789~1799",t:"프랑스 혁명",cat:["혁명","국가 형성"],big:1,sum:"자유·평등의 이념이 구체제를 무너뜨리다.",
+ c:["구체제 모순: 제1·2신분 2% 특권, 제3신분 98% 부담","시민 계급 성장, 계몽사상·미국 혁명의 영향","왕실의 재정난"],
+ d:["삼부회 → 국민 의회, 테니스코트의 서약","바스티유 감옥 습격, 봉건제 폐지, 인권 선언(1789)","입헌 군주제·제한 선거 → 입법 의회, 혁명 전쟁","국민 공회: 공화정, 루이 16세 처형(1793)","로베스피에르 공포 정치 → 총재 정부"],
+ r:["나폴레옹 쿠데타·통령 정부(1799)","자유주의와 민족주의 확산"],
+ p:["루이 16세","로베스피에르"],k:["삼부회","인권 선언","공포 정치","총재 정부"],rel:[["american","배경"],["enlight","배경"],["napoleon","결과"]]},
+{id:"napoleon",y:1799,yr:"1799~1815",t:"나폴레옹 시대",cat:["정치","국가 형성"],sum:"혁명의 이념이 유럽 전역에 퍼지다.",
+ c:["총재 정부의 혼란"],
+ d:["쿠데타, 통령 정부(1799), 나폴레옹 법전(1804)","국민 투표로 황제 즉위(1804)","대륙 봉쇄령 → 러시아가 어김 → 러시아 원정 실패","몰락: 엘바섬, 워털루 전투, 세인트헬레나섬"],
+ r:["자유주의 확산","침략에 맞선 민족주의 성장"],
+ p:["나폴레옹"],k:["나폴레옹 법전","대륙 봉쇄령","대프랑스 동맹"],rel:[["french","배경"],["vienna","결과"]]},
+{id:"vienna",y:1815,yr:"1814~1815",t:"빈 체제",cat:["정치"],sum:"혁명 이전으로 되돌리려는 보수적 질서.",
+ c:["나폴레옹 몰락 후 전후 혼란 수습"],
+ d:["빈 회의: 메테르니히 주도","영토·지배권을 프랑스 혁명 이전으로","자유주의·민족주의 탄압","그리스 독립으로 동요"],
+ r:["7월 혁명·2월 혁명으로 도전받고 붕괴"],
+ p:["메테르니히"],k:["빈 회의","보수","탄압"],rel:[["napoleon","배경"],["july","관련"],["feb","결과"]]},
+{id:"july",y:1830,yr:"1830",t:"7월 혁명",cat:["혁명"],sum:"샤를 10세를 몰아내고 입헌 군주정을 세우다.",
+ c:["부르봉 왕조 수립","샤를 10세의 전제 정치(의회 해산, 자유 제한)"],
+ d:["파리 시민 봉기","샤를 10세 추방, 루이 필리프 추대"],r:["입헌 군주정(7월 왕정)"],
+ p:[],k:["샤를 10세","루이 필리프","7월 왕정"],rel:[["vienna","배경"],["feb","관련"]]},
+{id:"chart",y:1832,yr:"1832~1838",t:"영국의 점진적 자유주의",cat:["정치","국가 형성"],sum:"영국은 의회 중심으로 조금씩 선거권을 넓히다.",
+ c:["노동자의 선거권 요구"],
+ d:["1차 선거법 개정(1832): 중산 계급 선거권","차티스트 운동: 인민헌장(1838) 서명 운동","곡물법·항해법 폐지 → 자유 무역"],
+ r:["정부 탄압으로 실패했으나 이후 선거법 개정에 영향"],
+ p:[],k:["선거법 개정","인민헌장","곡물법","항해법"],rel:[["july","동시대"],["glorious","관련"]]},
+{id:"feb",y:1848,yr:"1848",t:"2월 혁명",cat:["혁명"],sum:"공화정 수립, 유럽으로 번진 자유와 민족의 물결.",
+ c:["7월 왕정이 소수 부유층에게만 선거권 부여"],
+ d:["중소 시민층·노동자 봉기","루이 필리프 축출"],
+ r:["공화정 수립","자유주의·민족주의 확산, 메테르니히 추방 → 빈 체제 붕괴"],
+ p:[],k:["선거권 확대","빈 체제 붕괴"],rel:[["july","배경"],["vienna","결과"],["italy","영향"],["germany","영향"]]},
+{id:"italy",y:1861,yr:"1861 · 1870",t:"이탈리아 통일",cat:["국가 형성"],big:1,sum:"사르데냐 왕국과 붉은 셔츠단이 하나의 나라를 만들다.",
+ c:["여러 국가와 교황령으로 분열","오스트리아·프랑스의 간섭","2월 혁명의 영향"],
+ d:["카부르: 프랑스 지원으로 오스트리아 격파, 중북부 통일","가리발디: 시칠리아·나폴리 점령 후 사르데냐 왕에게 바침","이탈리아 왕국 수립(1861)","베네치아·교황령 통합"],
+ r:["통일 완성(1870)","국민 국가의 기틀"],
+ p:["카부르","가리발디"],k:["사르데냐","붉은 셔츠단","교황령"],rel:[["feb","배경"],["germany","동시대"]]},
+{id:"germany",y:1871,yr:"1834~1871",t:"독일 통일",cat:["국가 형성"],big:1,sum:"'피와 무기'로 이룬 독일 제국.",
+ c:["크고 작은 연방 국가로 분열"],
+ d:["관세 동맹(1834)","프랑크푸르트 의회(1848~49): 성과 없이 종결","비스마르크 철혈 정책","오스트리아 격파 → 북독일 연방","프랑스 격파 → 남독일 통합"],
+ r:["빌헬름 1세 황제 즉위, 독일 제국(1871)"],
+ p:["비스마르크"],k:["관세 동맹","철혈 정책","독일 제국"],rel:[["feb","배경"],["italy","동시대"]]}
+];
+const people={
+"디아스":["1450?~1500","포르투갈의 항해가. 아프리카 남쪽 끝 희망봉에 도착.","newroute"],
+"바스쿠 다가마":["1469?~1524","희망봉을 돌아 인도의 캘리컷에 도착, 인도 항로 개척.","newroute"],
+"콜럼버스":["1451~1506","에스파냐의 후원으로 대서양을 서쪽으로 건너 서인도 제도에 도착.","newroute"],
+"마젤란":["1480?~1521","대서양·태평양을 건너 필리핀에서 전사. 그의 일행이 최초의 세계 일주 성공.","newroute"],
+"루터":["1483~1546","독일 성직자. 95개조 반박문으로 면벌부 판매를 비판.","reform"],
+"칼뱅":["1509~1564","스위스에서 예정설을 주장. 상공업자의 지지를 얻음.","reform"],
+"헨리 8세":["1491~1547","이혼 문제로 교황과 갈등, 영국 국교회를 세움.","reform"],
+"엘리자베스 1세":["1533~1603","의회를 존중하며 무적함대를 격파, 해상 무역을 장악.","fiscal"],
+"찰스 1세":["1600~1649","절대주의를 추구. 내전에서 패하고 1649년 처형.","puritan"],
+"크롬웰":["1599~1658","의회파를 이끈 청교도 혁명의 주도자. 호국경으로 독재.","puritan"],
+"찰스 2세":["1630~1685","왕정복고로 즉위한 왕.","restor"],
+"제임스 2세":["1633~1701","전제 정치를 펴다 명예혁명으로 폐위.","glorious"],
+"메리":["1662~1694","제임스 2세의 딸. 남편 윌리엄과 공동 왕.","glorious"],
+"윌리엄":["1650~1702","메리의 남편. 공동 왕으로 추대되어 권리 장전을 승인.","glorious"],
+"워싱턴":["1732~1799","독립 전쟁 총사령관, 아메리카 합중국 초대 대통령.","american"],
+"루이 16세":["1754~1793","삼부회를 소집한 왕. 1793년 단두대에서 처형.","french"],
+"로베스피에르":["1758~1794","자코뱅 급진파. 공안 위원회로 공포 정치, 1794년 처형.","french"],
+"나폴레옹":["1769~1821","통령 정부(1799)와 제정(1804)을 세우고 유럽을 정복. 세인트헬레나섬에서 사망.","napoleon"],
+"메테르니히":["1773~1859","오스트리아 재상. 빈 회의를 주도, 2월 혁명으로 추방.","vienna"],
+"카부르":["1810~1861","사르데냐 왕국의 재상. 중북부를 통일.","italy"],
+"가리발디":["1807~1882","붉은 셔츠단을 이끌고 남부를 점령해 사르데냐 왕에게 바침.","italy"],
+"비스마르크":["1815~1898","프로이센 재상. 철혈 정책으로 독일 통일.","germany"]};
+const routes=[
+["디아스 (1488)","포르투갈 왕의 지원으로 아프리카 남쪽 끝을 탐험","희망봉에 도착"],
+["바스쿠 다가마 (1498)","희망봉을 돌아 인도로 가는 직접 항로를 개척","인도의 캘리컷에 도착, 인도 항로 개척"],
+["콜럼버스 (1492)","지구가 둥글다고 믿고 서쪽으로 가서 인도에 가려 함 (에스파냐 후원)","서인도 제도(아메리카 대륙)에 도착"],
+["마젤란 (1519~1522)","아메리카 남쪽을 지나 서쪽으로 항해 (에스파냐 후원)","필리핀에서 전사, 일행이 최초의 세계 일주 성공"]];
+// 문제: t유형, q, o보기, a정답 인덱스, e해설, ev관련 사건
+const Q=[
+{t:"순서 맞추기",q:"시간순으로 옳게 나열한 것은?",o:["청교도 혁명 → 왕정복고 → 명예혁명 → 권리 장전","왕정복고 → 청교도 혁명 → 권리 장전 → 명예혁명","명예혁명 → 청교도 혁명 → 왕정복고 → 권리 장전","청교도 혁명 → 명예혁명 → 왕정복고 → 권리 장전"],a:0,e:"1642 청교도 혁명 → 1660 왕정복고 → 1688 명예혁명 → 1689 권리 장전.",ev:"glorious"},
+{t:"원인 찾기",q:"프랑스 혁명의 배경으로 적절하지 않은 것은?",o:["구체제의 모순","계몽사상과 미국 혁명의 영향","왕실의 재정난","빈 체제의 성립"],a:3,e:"빈 체제는 나폴레옹 몰락 뒤(1815)에 성립했으므로 프랑스 혁명의 결과 쪽에 가깝다.",ev:"french"},
+{t:"결과 찾기",q:"명예혁명의 결과로 나타난 것은?",o:["크롬웰의 독재","입헌 군주제의 토대 마련","찰스 1세 처형","공화정 수립"],a:1,e:"명예혁명 후 권리 장전으로 왕권이 제한되고 의회 권한이 강화되었다.",ev:"glorious"},
+{t:"인물 연결",q:"'붉은 셔츠단'을 이끌고 시칠리아와 나폴리를 점령한 인물은?",o:["카부르","비스마르크","가리발디","메테르니히"],a:2,e:"가리발디는 점령지를 사르데냐 왕에게 바쳐 통일에 기여했다.",ev:"italy"},
+{t:"사건 연결",q:"미국 혁명의 직접적 계기가 된 사건은?",o:["요크타운 전투","보스턴 차 사건","파리 조약","독립 선언"],a:1,e:"영국 동인도 회사의 차 독점에 분노한 식민지인이 배를 습격했다(1773).",ev:"american"},
+{t:"빈칸",q:"1689년 영국에서는 (      )이 제정되어 왕권이 제한되었다.",o:["권리 청원","권리 장전","인민헌장","인권 선언"],a:1,e:"권리 장전: 의회 동의 없는 과세·상비군 금지 등을 규정.",ev:"bill"},
+{t:"O/X",q:"청교도 혁명에서는 의회파가 승리하고 찰스 1세가 처형되었다.",o:["O","X"],a:0,e:"크롬웰의 의회파가 승리했고 1649년 찰스 1세가 처형되었다.",ev:"puritan"},
+{t:"O/X",q:"신항로 개척으로 무역의 중심지가 대서양에서 지중해로 이동했다.",o:["O","X"],a:1,e:"지중해에서 대서양으로 이동했다.",ev:"trade"},
+{t:"O/X",q:"빈 체제는 자유주의·민족주의 운동을 지원했다.",o:["O","X"],a:1,e:"빈 체제는 이를 탄압하며 보수적 질서를 유지했다.",ev:"vienna"},
+{t:"타임라인 오류 찾기",q:"'신항로 개척 → 30년 전쟁 → 종교 개혁 → 청교도 혁명'에서 순서가 틀린 곳은?",o:["신항로 개척의 위치","30년 전쟁과 종교 개혁의 순서","청교도 혁명의 위치","틀린 곳 없음"],a:1,e:"종교 개혁(1517)이 먼저이고 30년 전쟁(1618~48)이 나중이다.",ev:"reform"},
+{t:"비교 문제",q:"청교도 혁명과 명예혁명의 차이로 옳은 것은?",o:["청교도 혁명은 내전과 왕의 처형이 있었다","명예혁명에서 공화정이 수립되었다","명예혁명의 왕은 찰스 1세다","두 혁명 모두 크롬웰이 주도했다"],a:0,e:"청교도 혁명은 내전·처형·공화정, 명예혁명은 무혈로 왕을 바꾸고 권리 장전을 승인.",ev:"puritan"},
+{t:"종합 문제",q:"계몽사상이 사상적 기반이 된 두 혁명은?",o:["청교도 혁명·명예혁명","미국 혁명·프랑스 혁명","7월 혁명·2월 혁명","이탈리아·독일 통일"],a:1,e:"몽테스키외와 루소의 사상이 미국·프랑스 혁명의 기반이 되었다.",ev:"enlight"},
+{t:"종합 문제",q:"프랑스 혁명이 유럽에 남긴 흐름과 그에 맞선 체제를 옳게 짝지은 것은?",o:["자유주의·민족주의 확산 ↔ 빈 체제","절대주의 ↔ 재정·군사 국가","공화정 ↔ 왕정복고","삼각 무역 ↔ 대륙 봉쇄령"],a:0,e:"혁명·나폴레옹 전쟁이 퍼뜨린 이념을 빈 체제가 억눌렀고, 7월·2월 혁명으로 무너졌다.",ev:"vienna"},
+{t:"결과 찾기",q:"독일 통일의 과정으로 옳은 것은?",o:["프랑스 격파 → 오스트리아 격파","오스트리아 격파 → 프랑스 격파 → 독일 제국(1871)","프랑크푸르트 의회에서 통일 완성","가리발디가 주도"],a:1,e:"비스마르크의 철혈 정책으로 오스트리아, 프랑스를 차례로 격파했다.",ev:"germany"},
+{t:"원인 찾기",q:"신항로 개척의 배경이 아닌 것은?",o:["『동방견문록』","동방 상품 수요 증가","항해술 발달","삼각 무역"],a:3,e:"삼각 무역은 신항로 개척 이후의 결과다.",ev:"newroute"},
+{t:"인물 연결",q:"영국 국교회를 세운 왕은?",o:["헨리 8세","찰스 1세","제임스 2세","엘리자베스 1세"],a:0,e:"이혼을 허락하지 않은 교황에서 독립하며 수장령을 선언.",ev:"reform"}
+];
+const CMP=[["시기","1642~1649","1688"],["왕","찰스 1세","제임스 2세 → 메리·윌리엄"],["주요 원인","절대주의, 의회 동의 없는 과세","전제 정치, 의회와 갈등"],["의회와 왕","내전으로 충돌","의회가 왕을 폐위"],["주요 인물","크롬웰","메리·윌리엄"],["전개","내전 → 찰스 1세 처형 → 공화정 → 왕정복고","제임스 2세 축출 → 메리·윌리엄 → 권리 장전"],["결과","일시적 공화정, 크롬웰 독재","입헌 군주제의 토대"],["핵심 용어","권리 청원, 의회파, 왕당파","권리 장전, 입헌 군주제"]];
+const C=[
+["마르코 폴로","newroute","이탈리아 출신 상인. 원대 중국을 방문하고 여행기 『동방견문록』을 남겨 유럽인의 동방 호기심을 자극했다."],
+["캐러벨선","newroute","포르투갈이 개발한 배. 큰 삼각돛을 달아 빠르고 안전하게 항해할 수 있었다."],
+["해도","newroute","바다의 깊이, 암초, 해류, 뱃길을 그린 지도. 항해에 대한 자신감을 높였다."],
+["서인도 제도","newroute","콜럼버스가 인도로 가려다 도착한 곳. 이후 아메리고 베스푸치가 새 대륙임을 밝혀 '아메리카'로 불리게 되었다."],
+["삼각 무역","trade","유럽의 면직물·무기를 아프리카 노예와 교환하고, 노예를 아메리카 대농장에 투입해 얻은 담배·사탕수수를 유럽에 판매했다."],
+["가격 혁명","trade","아메리카의 막대한 금·은이 유입되어 유럽의 물가가 크게 상승한 현상."],
+["상업 혁명","trade","넓은 해외 시장을 갖춘 유럽에서 상업·제조업·금융업이 발달해 근대 자본주의의 바탕이 마련된 것."],
+["동인도 회사","trade","유럽 국가들이 아시아와의 무역을 담당하도록 동인도에 세운 회사."],
+["아스테카 문명","trade","멕시코고원, 수도 테노치티틀란. 피라미드식 신전, 달력과 그림 문자 사용. 에스파냐의 코르테스에게 정복됨."],
+["잉카 문명","trade","안데스고원, 수도 쿠스코. 계단식 밭에서 감자·옥수수 재배. 에스파냐의 피사로에게 정복됨."],
+["면벌부","reform","로마 가톨릭 교회가 돈을 받고 교황의 이름으로 죽은 뒤의 벌을 면해 준 문서."],
+["95개조 반박문","reform","루터가 면벌부 판매를 비판하며 발표. 구원은 오직 신앙으로만 가능하다고 주장했다."],
+["아우크스부르크 화의","reform","1555년. 루터파를 공식 인정하고 제후가 루터파와 로마 가톨릭 중 선택할 수 있게 함."],
+["예정설","reform","칼뱅의 주장. 인간의 구원 여부는 신이 미리 정해 놓았다. 이윤 추구를 정당화해 상공업자의 지지를 얻었다."],
+["영국 국교회","reform","헨리 8세가 이혼을 허락하지 않는 교황에게서 독립하며 국왕이 교회의 수장임을 선언해 성립."],
+["상비군","fiscal","직업 군인으로 이루어져 국왕이 언제든 동원할 수 있는 군대. 유지 비용 때문에 중상주의를 추진했다."],
+["별 모양 성채","fiscal","대포 공격에 견디도록 성벽을 비스듬히 세우고 성채를 별 모양으로 만든 것."],
+["중상주의","fiscal","수입을 제한하고 수출을 늘려 금·은을 확보, 국내 산업 보호, 식민지 확보를 추구한 정책."],
+["베르사유 궁전","fiscal","루이 14세가 절대주의 권력을 과시하려고 지은 궁전. 프리드리히 2세는 이를 본떠 상수시 궁전을 지었다."],
+["베스트팔렌 조약","war","30년 전쟁의 결과. 제후가 종파를 선택할 수 있게 하고, 스위스·네덜란드의 독립을 승인했다."],
+["권리 청원","puritan","의회가 찰스 1세에게 제출. 찰스 1세는 승인 후 의회를 해산했다."],
+["호국경","puritan","크롬웰이 공화정 수립 후 올라 독재 정치를 실시한 지위."],
+["입헌 군주제","bill","군주의 권력이 헌법에 의해 제한받는 정치 형태."],
+["사회 계약설","enlight","사람들이 자연권 보장을 위해 계약으로 국가를 세웠다는 이론. 로크는 정부가 자연권을 지키지 못하면 저항할 권리가 있다고 주장."],
+["만유인력의 법칙","enlight","뉴턴. 모든 물체는 서로 끌어당기는 힘이 있고 우주의 움직임을 수학적으로 설명."],
+["삼권 분립","enlight","국가 권력을 입법·사법·행정으로 나누어 견제와 균형을 이루게 하는 원리. 몽테스키외가 주장."],
+["7년 전쟁","american","영국과 프랑스가 북아메리카 식민지 지배권을 두고 벌인 전쟁. 영국이 승리했지만 재정이 부족해졌다."],
+["인지세법","american","문서·신문에 인지를 붙이게 한 법. 식민지인들은 '대표 없는 곳에 과세할 수 없다'며 저항했다."],
+["보스턴 차 사건","american","1773년. 동인도 회사의 차 독점에 분노한 식민지인들이 인디언으로 분장하고 배를 습격해 차를 바다에 던졌다."],
+["대륙 회의","american","13개 식민지 대표의 회의체(1774~1781). 독립 선언 공포, 전쟁 수행과 외교를 논의."],
+["독립 선언문","american","1776년. 평등권, 생명·자유·행복 추구권, 천부 인권, 국민 주권, 저항권 등의 원리를 담았다."],
+["연방제","american","국가 권력이 연방 정부와 주 정부에 나뉘어 있는 정치 형태."],
+["삼부회","french","성직자·귀족·평민 대표의 신분제 의회. 루이 16세가 세금을 걷으려고 170여 년 만에 소집했다."],
+["테니스코트의 서약","french","제3신분이 국민 의회를 구성하고 '새 헌법이 제정될 때까지 해산하지 않는다'고 맹세."],
+["바스티유 감옥 습격","french","루이 16세가 국민 의회를 탄압하자 파리 민중이 전제 정치의 상징인 감옥을 습격, 혁명이 전국으로 확산."],
+["인권 선언","french","1789년. 자유·평등, 자연권, 국민 주권을 담은 프랑스 혁명의 정신."],
+["공포 정치","french","로베스피에르가 공안 위원회와 혁명 재판소로 혁명 반대 세력을 탄압. 이후 테르미도르 반동으로 처형됨."],
+["나폴레옹 법전","napoleon","1804년. 개인의 자유와 법 앞의 평등 등 혁명의 성과를 반영, 근대 시민 사회 법전에 영향."],
+["대륙 봉쇄령","napoleon","영국을 경제적으로 고립시키려는 조치. 러시아가 어기자 러시아 원정에 나섰다가 실패."],
+["대프랑스 동맹","napoleon","나폴레옹의 침략과 지배에 맞서 유럽 국가들이 맺은 군사 동맹."],
+["빈 회의","vienna","1814~1815. 오스트리아 재상 메테르니히가 주도, 영토와 지배권을 프랑스 혁명 이전으로 되돌리기로 합의."],
+["곡물법·항해법","chart","곡물법은 수입 곡물에 높은 관세를 물려 지주를 보호, 항해법은 수입품을 영국·생산국 선박으로만 운송하게 한 법. 둘 다 폐지되어 자유 무역 체제로."],
+["인민헌장","chart","1838년. 21세 이상 남자 선거권, 비밀 투표, 재산 자격 폐지, 의원 보수 지급, 인구 비례 선거구, 매년 선거 요구."],
+["교황령","italy","교황이 직접 통치하던 이탈리아 중부 영토. 통일의 장애물이었고 통일 과정에서 사라졌다."],
+["붉은 셔츠단","italy","가리발디가 이끈 의용대. 시칠리아·나폴리를 점령해 사르데냐 왕에게 바쳤다."],
+["관세 동맹","germany","독일 내 여러 나라 사이 상품에 관세를 물리지 않기로 한 협정(1834). 경제적 통합의 발판."],
+["철혈 정책","germany","비스마르크가 '피와 무기'로 문제를 해결하겠다며 군비를 확장한 정책."]];
+const cardH=c=>`<button class="box cd" onclick="this.classList.toggle('open')"><b>${c[0]}</b><p>${c[2]}</p><span class="tag" onclick="event.stopPropagation();go('${c[1]}')">↗ ${E(c[1]).t}</span></button>`;
+function cards(){$("#v-cards").innerHTML=`<h1 style="font-size:36px">세부 카드</h1><p class="sub">카드를 눌러 펼치고, ↗를 눌러 사건으로 이동하세요.</p>`+events.filter(e=>C.some(c=>c[1]==e.id)).map(e=>`<h3 style="color:var(--gold)">${e.yr} ${e.t}</h3><div class="grid">${C.filter(c=>c[1]==e.id).map(cardH).join("")}</div>`).join("")}
+function dnd(el){let d=null;el.onpointerdown=e=>{const it=e.target.closest(".di");if(!it)return;d=it;it.classList.add("drg");it.setPointerCapture(e.pointerId)};
+ el.onpointermove=e=>{if(!d)return;const o=document.elementFromPoint(e.clientX,e.clientY),t=o&&o.closest(".di");if(t&&t!=d){const r=t.getBoundingClientRect();el.insertBefore(d,e.clientY>r.top+r.height/2?t.nextSibling:t)}};
+ el.onpointerup=el.onpointercancel=()=>{if(d)d.classList.remove("drg");d=null}}
+function chk(){const q=S.list[S.i],L=[...document.querySelectorAll("#dl .di")];L.forEach((x,i)=>x.classList.add(+x.dataset.i==i?"ok":"no"));$("#dl").style.pointerEvents="none";$("#ck").style.display="none";fin(L.every((x,i)=>+x.dataset.i==i),q)}
+const OX=["O","X"];
+Q.push(...[
+["순서 맞추기 (드래그)","다음 사건을 시간순으로 배열하시오.",["청교도 혁명","왕정복고","명예혁명","권리 장전"],"1642 → 1660 → 1688 → 1689 순서.","glorious"],
+["순서 맞추기 (드래그)","신항로 개척 과정을 시간순으로 배열하시오.",["디아스의 희망봉 도착","콜럼버스의 서인도 제도 도착","바스쿠 다가마의 인도 도착","마젤란 함대의 세계 일주"],"디아스(1488) → 콜럼버스(1492) → 바스쿠 다가마(1498) → 마젤란 함대(1519~1522).","newroute"],
+["순서 맞추기 (드래그)","미국 혁명의 전개를 순서대로 배열하시오.",["보스턴 차 사건","대륙 회의 개최","독립 선언문 발표","요크타운 전투 승리","파리 조약 체결"],"1773 보스턴 차 사건 → 대륙 회의 → 1776 독립 선언 → 요크타운 → 1783 파리 조약.","american"],
+["순서 맞추기 (드래그)","프랑스 혁명의 전개를 순서대로 배열하시오.",["삼부회 소집","테니스코트의 서약","바스티유 감옥 습격","인권 선언 발표","루이 16세 처형"],"삼부회 → 서약 → 바스티유 → 인권 선언(1789) → 루이 16세 처형(1793).","french"],
+["순서 맞추기 (드래그)","독일 통일 과정을 순서대로 배열하시오.",["관세 동맹","프랑크푸르트 의회","철혈 정책","오스트리아 격파","독일 제국 수립"],"관세 동맹(1834) → 프랑크푸르트 의회(1848~49) → 철혈 정책 → 오스트리아 격파 → 독일 제국(1871).","germany"],
+["종합 문제 (드래그)","큰 흐름을 시간순으로 배열하시오.",["종교 개혁","청교도 혁명","미국 혁명","프랑스 혁명","7월 혁명","독일 제국 수립"],"1517 → 1642 → 1776 → 1789 → 1830 → 1871.","reform"]
+].map(x=>({t:x[0],q:x[1],items:x[2],e:x[3],ev:x[4]})));
+Q.push(...[
+["원인 찾기","유럽 상인들이 동방과 직접 교역하려 한 이유는?",["이슬람·이탈리아 상인이 동방 상품을 독점했기 때문","아메리카에서 금·은이 들어왔기 때문","삼각 무역이 시작되었기 때문","종교 개혁이 일어났기 때문"],0,"동방 상품을 이슬람과 이탈리아 상인이 독점하자 직접 교역로를 찾아 나섰다.","newroute"],
+["결과 찾기","신항로 개척 이후 아메리카 원주민 인구가 급감한 원인으로 알맞은 것은?",["플랜테이션·광산의 가혹한 노동과 천연두·홍역","삼각 무역의 중단","종교 전쟁","대륙 봉쇄령"],0,"에스파냐의 정복 이후 가혹한 노동과 유럽에서 들어온 전염병으로 인구가 급감했다.","trade"],
+["O/X","마젤란은 세계 일주를 직접 마치고 돌아왔다.",OX,1,"마젤란은 필리핀에서 전사했고, 그의 일행이 최초의 세계 일주에 성공했다.","newroute"],
+["빈칸","루터는 (      )을 발표하여 면벌부 판매를 비판했다.",["95개조 반박문","권리 청원","인권 선언","독립 선언문"],0,"루터는 구원이 신앙으로만 가능하다고 주장했다.","reform"],
+["인물 연결","예정설을 주장하며 상공업자의 지지를 얻은 인물은?",["루터","칼뱅","헨리 8세","엘리자베스 1세"],1,"칼뱅은 이윤 추구를 정당화해 프랑스·영국·네덜란드로 확산되었다.","reform"],
+["결과 찾기","재정·군사 국가가 상비군 유지를 위한 재정 확보를 위해 추진한 정책은?",["중상주의","삼권 분립","자유 무역","연방제"],0,"수입 제한·수출 확대로 금·은을 확보하고 산업을 보호했다.","fiscal"],
+["사건 연결","청교도 혁명에서 권리 청원 이후에 일어난 일은?",["찰스 1세가 승인 후 의회를 해산하고 내전이 벌어졌다","메리와 윌리엄이 공동 왕이 되었다","권리 장전이 제정되었다","왕정복고가 이루어졌다"],0,"이후 의회파와 왕당파의 내전에서 크롬웰의 의회파가 승리했다.","puritan"],
+["O/X","크롬웰 사후 왕정복고로 찰스 2세가 즉위했다.",OX,0,"1660년 왕정복고로 찰스 2세가 즉위했다.","restor"],
+["결과 찾기","권리 장전의 내용으로 옳지 않은 것은?",["왕이 의회 승인 없이 세금을 거둘 수 있다","의회 동의 없는 법 집행 정지는 불법이다","평상시 의회 동의 없는 상비군 유지는 불법이다","입헌주의 전통의 바탕이 되었다"],0,"의회 승인 없는 과세는 불법으로 규정했다.","bill"],
+["원인 찾기","영국이 북아메리카 식민지에 인지세 등을 부과한 직접적 배경은?",["7년 전쟁으로 인한 재정 부족","보스턴 차 사건","독립 선언","파리 조약"],0,"프랑스와의 7년 전쟁으로 재정이 악화되었다.","american"],
+["결과 찾기","독립 선언문에 담긴 원리가 아닌 것은?",["천부 인권","저항권","국민 주권","신분제 유지"],3,"평등권, 천부 인권, 국민 주권, 저항권 등 민주주의 원리를 담았다.","american"],
+["인물 연결","국가 권력을 입법·사법·행정으로 나누어야 한다고 주장한 계몽사상가는?",["볼테르","몽테스키외","루소","로크"],1,"몽테스키외의 삼권 분립은 미국 헌법 등에 영향을 주었다.","enlight"],
+["O/X","삼부회에서 제3신분은 신분별 표결을 요구했다.",OX,1,"제3신분은 신분별 투표 대신 머릿수에 따른 투표를 요구했다.","french"],
+["사건 연결","로베스피에르 처형 뒤 수립된 정부는?",["통령 정부","총재 정부","입법 의회","국민 의회"],1,"5명의 총재가 행정과 외교를 맡았고, 이후 나폴레옹의 쿠데타로 통령 정부가 세워졌다.","french"],
+["사건 연결","나폴레옹 몰락의 직접적 계기가 된 사건은?",["러시아 원정 실패","인권 선언","7월 혁명","관세 동맹"],0,"러시아가 대륙 봉쇄령을 어기자 원정에 나섰다가 혹독한 추위로 실패했다.","napoleon"],
+["결과 찾기","7월 혁명의 결과로 수립된 정치 체제는?",["공화정","입헌 군주정(7월 왕정)","절대 왕정","제정"],1,"샤를 10세를 추방하고 루이 필리프를 왕으로 추대했다.","july"],
+["결과 찾기","2월 혁명의 영향으로 옳은 것은?",["빈 체제 강화","메테르니히 추방과 빈 체제 붕괴","곡물법 제정","제정 수립"],1,"자유주의와 민족주의 운동이 확산되며 빈 체제가 무너졌다.","feb"],
+["결과 찾기","1832년 1차 선거법 개정으로 선거권을 얻은 계층은?",["도시 신흥 상공업자 등 중산 계급","모든 성인 남녀","농민과 광산 노동자","귀족"],0,"이에 선거권이 없던 노동자들은 인민헌장과 차티스트 운동을 벌였다.","chart"],
+["O/X","이탈리아 왕국은 1870년에 수립되었다.",OX,1,"이탈리아 왕국은 1861년, 통일 완성이 1870년이다.","italy"],
+["인물 연결","프랑스의 지원으로 오스트리아를 물리치고 이탈리아 중북부를 통일한 사르데냐 왕국의 재상은?",["가리발디","카부르","비스마르크","메테르니히"],1,"카부르는 산업 육성과 군대 개편, 외교로 통일을 이끌었다.","italy"],
+["사건 연결","독일 통일의 경제적 기반이 된 것은?",["관세 동맹","빈 회의","대륙 봉쇄령","베스트팔렌 조약"],0,"프로이센 주도의 관세 동맹(1834)으로 경제적 통합 기반이 마련되었다.","germany"],
+["종합 문제","삼각 무역에서 유럽 상인이 아프리카 노예와 교환한 물품은?",["면직물과 무기","감자와 옥수수","금과 은","차와 도자기"],0,"노예는 아메리카 대농장에 투입되어 담배·사탕수수를 생산했다.","trade"]
+].map(x=>({t:x[0],q:x[1],o:x[2],a:x[3],e:x[4],ev:x[5]})));
+// ===== LOGIC =====
+const $=s=>document.querySelector(s),E=id=>events.find(e=>e.id==id);
+const seen=new Set(),solved=new Set();let cur=null,filt="전체",qs=[];
+const V=[["tl","타임라인"],["ppl","인물"],["map","지도"],["quiz","랜덤 퀴즈"],["cards","세부 카드"],["all","전체 사건"],["prog","학습 진행도"]];
+$("#nav").innerHTML=V.map(v=>`<button data-v="${v[0]}" onclick="show('${v[0]}')">${v[1]}</button>`).join("");
+function show(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id=="v-"+v));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v==v));closeD();
+ if(v=="quiz")quizMenu();if(v=="prog")prog();window.scrollTo(0,0)}
+const F=["전체","혁명","정치","종교","경제","인물","탐험","국가 형성","문제"];
+function filters(){$("#filters").innerHTML=F.map(f=>`<button class="chip ${f==filt?"on":""}" onclick="filt='${f}';filters();tl()">${f}</button>`).join("")}
+function hit(e){return filt=="전체"||e.cat.includes(filt)||(filt=="인물"&&e.p.length)||(filt=="문제"&&Q.some(q=>q.ev==e.id))}
+function tl(){$("#tl").innerHTML=events.filter(hit).map(e=>`<button class="n ${e.big?"big":""} ${cur==e.id?"sel":""} ${seen.has(e.id)?"seen":""}" onclick="go('${e.id}')"><i></i><b>${e.yr}</b><span>${e.t}</span><small>${e.sum}</small></button>`).join("")}
+function info(){const e=E(cur||"newroute");$("#info").innerHTML=`<div class="y">${e.yr}</div><h2 style="margin:0">${e.t}</h2><p>“${e.sum}”</p><button class="cta" onclick="open_('${e.id}')">자세히 보기</button>`}
+function go(id){cur=id;show("tl");tl();info();open_(id);const s=document.querySelector(".n.sel");s&&s.scrollIntoView({block:"center"})}
+function ul(a){return"<ul>"+a.map(x=>`<li>${x}</li>`).join("")+"</ul>"}
+function open_(id){const e=E(id);seen.add(id);cur=id;tl();info();
+ const bg=e.rel.filter(r=>r[1]=="배경"),ef=e.rel.filter(r=>["영향","결과"].includes(r[1])),ot=e.rel.filter(r=>!["배경","영향","결과"].includes(r[1]));
+ const ch=r=>`<button onclick="go('${r[0]}')"><small>[${r[1]}]</small>${E(r[0]).t}</button>`;
+ const qn=Q.filter(q=>q.ev==id);
+ $("#panel").innerHTML=`<button class="chip" onclick="closeD()">닫기 ✕</button><div class="sans" style="color:var(--gold);margin-top:10px">${e.yr}</div><h2>${e.t}</h2><p>${e.sum}</p>
+ <div class="sec"><h3>왜 일어났을까?</h3>${ul(e.c)}</div><div class="sec"><h3>무슨 일이 있었을까?</h3>${ul(e.d)}</div><div class="sec"><h3>결과는?</h3>${ul(e.r)}</div>
+ <p>${e.k.map(k=>`<span class="tag">#${k}</span>`).join("")}</p>
+ <div class="sec"><h3>사건 연결</h3><div class="flow">${bg.map(ch).join("")||"<span class=tag>시작점</span>"}<span>⟶</span><span class="cur">${e.t}</span><span>⟶</span>${ef.map(ch).join("")||"<span class=tag>—</span>"}</div>${ot.length?`<div class="rel">${ot.map(ch).join("")}</div>`:""}</div>
+ ${e.p.length?`<div class="sec"><h3>관련 인물</h3><div class="rel">${e.p.map(p=>`<button onclick="pp('${p}')">${p}</button>`).join("")}</div><div id="pp" style="margin-top:8px"></div></div>`:""}
+ ${C.some(c=>c[1]==id)?`<div class="sec"><h3>세부 카드</h3><div class="grid" style="grid-template-columns:1fr 1fr">${C.filter(c=>c[1]==id).map(cardH).join("")}</div></div>`:""}
+ ${qn.length?`<button class="cta" onclick="runQ(Q.filter(q=>q.ev=='${id}'),'${e.t}')">관련 문제 풀기 (${qn.length})</button>`:""}`;
+ $("#dr").classList.add("on")}
+function closeD(){$("#dr").classList.remove("on")}
+function pp(n){const p=people[n];$("#pp").innerHTML=`<div class="box"><b>${n}</b> <span class="tag">${p[0]}</span><p>${p[1]}</p><button class="pbtn" onclick="go('${p[2]}')">관련 사건: ${E(p[2]).t}</button></div>`}
+function ppl(){$("#ppl").innerHTML=Object.keys(people).map(n=>`<button class="box" onclick="pc('${n}')"><b>${n}</b><div class="tag">${people[n][0]}</div></button>`).join("")}
+function pc(n){const p=people[n],ks=events.filter(e=>e.p.includes(n)),b=$("#pcard");b.style.display="block";
+ b.innerHTML=`<h2 style="margin:0">${n}</h2><div class="tag">활동 시기 ${p[0]}</div><p>${p[1]}</p><button class="pbtn" onclick="go('${p[2]}')">${E(p[2]).t}</button><div>${(ks[0]?ks[0].k:[]).map(k=>`<span class=tag>#${k}</span>`).join("")}</div>`;b.scrollIntoView({behavior:"smooth"})}
+function map(){document.querySelectorAll(".rt").forEach((r,i)=>{r.onclick=()=>{document.querySelectorAll(".rt").forEach(x=>x.classList.remove("on"));r.classList.add("on");const d=routes[i];
+ $("#mapinfo").innerHTML=`<h3 style="margin:0;color:var(--gold)">${d[0]}</h3><p><b>항해 목적</b> ${d[1]}</p><p><b>결과</b> ${d[2]}</p><button class="pbtn" onclick="go('newroute')">신항로 개척 자세히</button>`}})}
+function cmp(){$("#cmp").innerHTML=[["청교도 혁명",1],["명예혁명",2]].map(x=>`<div class="box"><h2 style="margin:0">${x[0]}</h2><dl>${CMP.map(r=>`<dt>${r[0]}</dt><dd>${r[x[1]]}</dd>`).join("")}</dl><button class="pbtn" onclick="go('${x[1]==1?"puritan":"glorious"}')">자세히</button></div>`).join("");
+ $("#cmp2").innerHTML=`<div class="cmp" style="margin-top:14px"><div class="box"><h3 style="color:var(--gold)">두 혁명의 공통점</h3>${ul(["의회가 왕권을 제한하려 한 흐름","왕의 절대주의·전제 정치에 대한 반발","의회 권한 강화로 이어짐"])}</div><div class="box"><h3 style="color:var(--gold)">두 혁명의 차이점</h3>${ul(["청교도 혁명: 내전·왕 처형·공화정·독재, 이후 왕정복고","명예혁명: 피 없이 왕을 교체, 권리 장전으로 입헌 군주제의 토대"])}</div></div>`}
+function all(){$("#all").innerHTML=events.map(e=>`<button class="box" onclick="go('${e.id}')"><div class="tag">${e.yr}${seen.has(e.id)?" ✓":""}</div><br><b>${e.t}</b></button>`).join("")}
+// 퀴즈
+function quizMenu(){$("#v-quiz").innerHTML=`<h1 style="font-size:36px">역사 퀴즈</h1><p class="sub">전체 범위에서 문제가 랜덤으로 나와요. 도전해 봐요!</p><button class="cta" onclick="runQ(shuf(Q).slice(0,20),'랜덤 역사 문제')">랜덤 역사 문제</button>`}
+function shuf(a){return a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1])}
+let S;
+function runQ(list,title){S={list,i:0,sc:0,ok:0,wr:[],title};show("quiz");qn()}
+function qn(){if(S.i>=S.list.length)return res();const q=S.list[S.i];
+ let ord=(q.o||[]).map((_,i)=>i);if(ord.length>2)ord=shuf(ord);
+ $("#v-quiz").innerHTML=`<div class="tag">${S.title}</div><h2>문제 ${S.i+1} / ${S.list.length} <span class="tag" style="float:right">점수 ${S.sc}</span></h2><div class="bar"><div style="width:${S.i/S.list.length*100}%"></div></div><p><span class="tag">[${q.t}]</span></p><h3>${q.q}</h3>
+ ${q.items?`<p class="sub">항목을 끌어서 시간순으로 정렬하세요.</p><div id="dl">${shuf(q.items.map((x,i)=>[x,i])).map(x=>`<div class="di" data-i="${x[1]}">⠿ ${x[0]}</div>`).join("")}</div><button class="cta" id="ck" onclick="chk()">정답 확인</button>`:ord.map((oi,k)=>`<button class="opt" onclick="ans(${oi},this)">${"①②③④"[k]} ${q.o[oi]}</button>`).join("")}<div id="fb"></div>`;if(q.items)dnd($("#dl"))}
+function ans(oi,b){const q=S.list[S.i],ok=oi==q.a;document.querySelectorAll(".opt").forEach(x=>x.disabled=true);
+ b.classList.add(ok?"ok":"no");if(!ok)document.querySelectorAll(".opt").forEach(x=>{if(x.textContent.includes(q.o[q.a]))x.classList.add("ok")});
+ fin(ok,q)}
+function fin(ok,q){if(ok){S.sc+=100;S.ok++}else S.wr.push(q);solved.add(Q.indexOf(q));
+ $("#fb").innerHTML=`<div class="box" style="margin-top:12px"><b style="color:var(--${ok?"ok":"no"})">${ok?"정답이에요! 🎉":"아쉬워요! 해설을 확인해 봐요."}</b><p>왜? → ${q.e}</p><button class="pbtn" onclick="go('${q.ev}')">${E(q.ev).t} 다시 보기</button> <button class="cta" onclick="S.i++;qn()">${S.i+1<S.list.length?"다음 문제":"결과 보기"}</button></div>`}
+function res(){const n=S.list.length;$("#v-quiz").innerHTML=`<h1 style="font-size:36px">결과</h1><h2>${n}문제 중 ${S.ok}문제 정답</h2><p class="sub">정답률 ${Math.round(S.ok/n*100)}% · 점수 ${S.sc}</p>
+ ${S.wr.length?`<h3>틀린 문제 다시 보기</h3>`+S.wr.map(q=>`<div class="box" style="margin:8px 0"><b>${q.q}</b><p>정답: ${q.items?q.items.join(" → "):q.o[q.a]}<br>${q.e}</p><button class="pbtn" onclick="go('${q.ev}')">${E(q.ev).t}</button></div>`).join("")+`<button class="cta" onclick="runQ(S.wr,'오답 복습')">틀린 문제 다시 풀기</button>`:"<p>모두 맞혔어요! 대단해요 👏</p>"} <button class="pbtn" onclick="quizMenu()">처음으로</button>`}
+function prog(){const a=Math.round(seen.size/events.length*100);$("#v-prog").innerHTML=`<h1 style="font-size:36px">내가 살펴본 역사</h1><div class="bar"><div style="width:${a}%"></div></div><h2>${a}%</h2><p>탐색한 사건: ${seen.size} / ${events.length}<br>푼 문제: ${solved.size} / ${Q.length}</p><h3>아직 보지 않은 사건</h3><div class="rel">${events.filter(e=>!seen.has(e.id)).map(e=>`<button onclick="go('${e.id}')">${e.t}</button>`).join("")||"모두 탐색했습니다."}</div>`}
+filters();tl();info();ppl();map();all();cards();show("tl");
+</script></body></html>
