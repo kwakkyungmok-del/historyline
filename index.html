@@ -406,4 +406,5 @@ function res(){const n=S.list.length;$("#v-quiz").innerHTML=`<h1 style="font-siz
  ${S.wr.length?`<h3>틀린 문제 다시 보기</h3>`+S.wr.map(q=>`<div class="box" style="margin:8px 0"><b>${q.q}</b><p>정답: ${q.items?q.items.join(" → "):q.o[q.a]}<br>${q.e}</p><button class="pbtn" onclick="go('${q.ev}')">${E(q.ev).t}</button></div>`).join("")+`<button class="cta" onclick="runQ(S.wr,'오답 복습')">틀린 문제 다시 풀기</button>`:"<p>모두 맞혔어요! 대단해요 👏</p>"} <button class="pbtn" onclick="quizMenu()">처음으로</button>`}
 function prog(){const a=Math.round(seen.size/events.length*100);$("#v-prog").innerHTML=`<h1 style="font-size:36px">내가 살펴본 역사</h1><div class="bar"><div style="width:${a}%"></div></div><h2>${a}%</h2><p>탐색한 사건: ${seen.size} / ${events.length}<br>푼 문제: ${solved.size} / ${Q.length}</p><h3>아직 보지 않은 사건</h3><div class="rel">${events.filter(e=>!seen.has(e.id)).map(e=>`<button onclick="go('${e.id}')">${e.t}</button>`).join("")||"모두 탐색했습니다."}</div>`}
 filters();tl();info();ppl();map();all();cards();show("tl");
-</script>npm i @vercel/analytics import { Analytics } from "@vercel/analytics/next"</body></html>
+ npm i @vercel/analytics import { Analytics } from "@vercel/analytics/next"
+</script></body></html>
